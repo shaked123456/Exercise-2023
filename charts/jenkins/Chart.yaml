@@ -1,0 +1,6 @@
+apiVersion: v2
+type: application
+name: jenkins
+version: 4.3.28
+appVersion: 2.401.1
+description: Jenkins Helm Chart

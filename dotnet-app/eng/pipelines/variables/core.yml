@@ -1,0 +1,8 @@
+variables:
+- template: ../../common/templates/variables/dotnet/build-test-publish.yml
+
+- ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+  - group: AzureDevOps-Artifact-Feeds-Pats
+
+- name: manifest
+  value: manifest.json

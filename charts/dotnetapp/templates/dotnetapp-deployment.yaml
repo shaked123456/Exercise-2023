@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.dotnetapp.name }}
+  namespace: {{ .Values.dotnetapp.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.dotnetapp.labels }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.dotnetapp.labels }}
+    spec:
+      containers:
+        - image: {{ .Values.dotnetapp.containers.image }}
+        imagePullPolicy: IfNotPresent
+        name: {{ .Values.dotnetapp.app }} 
+        ports:
+        - containerPort: 8000
+          protocol: TCP

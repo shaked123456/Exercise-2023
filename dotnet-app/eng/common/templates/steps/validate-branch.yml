@@ -1,0 +1,14 @@
+parameters:
+  internalProjectName: null
+
+steps:
+- ${{ if and(eq(variables['System.TeamProject'], parameters.internalProjectName), ne(variables['Build.Reason'], 'PullRequest')) }}:
+  - powershell: |
+      if (-not "$(officialBranches)".Split(',').Contains("$(sourceBranch)") `
+          -and "$(officialBranches)".Split(',').Contains("$(publishRepoPrefix)") `
+          -and "$(overrideOfficialBranchValidation)" -ne "true")
+      {
+        echo "##vso[task.logissue type=error]Official builds must be done from an official branch: $(officialBranches)"
+        exit 1
+      }
+    displayName: Validate Branch

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agent-dotnetapp
+  namespace: dotnetapp
+  labels:
+    app: agent-dotnetapp
+spec:
+  serviceAccount: jenkins
+  containers:
+  - name: agent-dotnetapp
+    image: docker
+    command:
+    - cat
+    volumeMounts:
+    - name: docker-socket
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: docker-socket
+    hostPath:
+      path: /var/run/docker.sock

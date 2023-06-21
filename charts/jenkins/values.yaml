@@ -1,0 +1,16 @@
+jenkins: 
+  name: jenkins-deployment
+  namespace: devops
+  labels: jenkins
+  containers:
+    image: jenkins/jenkins:lts
+  volumes:
+    name: jenkins-data
+    mountPath: /var/jenkins_home
+    storageClassName: local-storage
+  serviceAccount: jenkins-admin
+  volumeMounts:
+  - mountPath: /var/jenkins_home  
+  pvc:
+    name: jenkins-pvc  
+

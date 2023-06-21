@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: agent-devops
+  namespace: devops
+  labels:
+    app: agent-devops
+spec:
+  serviceAccount: jenkins
+  containers:
+  - name: agent-devops
+    image: docker:24.0.2
+    command:
+    - cat
+    resources:
+      limits:
+        cpu: "1000m"
+        memory: "2048Mi"
+    tty: true
+    volumeMounts:
+    - name: docker-socket
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: docker-socket
+    hostPath:
+      path: /var/run/docker.sock

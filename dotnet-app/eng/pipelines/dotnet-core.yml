@@ -1,0 +1,21 @@
+trigger: none
+pr: none
+
+resources:
+  repositories:
+  - repository: InternalVersionsRepo
+    type: github
+    endpoint: dotnet
+    name: dotnet/versions
+
+variables:
+- template: variables/core.yml
+
+stages:
+- template: stages/build-test-publish-repo.yml
+  parameters:
+    internalProjectName: ${{ variables.internalProjectName }}
+    publicProjectName: ${{ variables.publicProjectName }}
+    linuxAmd64Pool:
+      name: NetCore1ESPool-Svc-Internal
+      demands: ImageOverride -equals Build.Ubuntu.1804.Amd64

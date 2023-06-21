@@ -1,0 +1,30 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - nightly
+  paths:
+    include:
+    - manifest.json
+    - manifest.versions.json
+    - src/*
+pr: none
+
+resources:
+  repositories:
+  - repository: InternalVersionsRepo
+    type: github
+    endpoint: dotnet
+    name: dotnet/versions
+
+variables:
+- template: variables/core.yml
+- name: officialBranches
+  # comma-delimited list of branch names
+  value: nightly
+
+stages:
+- template: stages/build-test-publish-repo.yml
+  parameters:
+    internalProjectName: ${{ variables.internalProjectName }}
+    publicProjectName: ${{ variables.publicProjectName }}

@@ -1,0 +1,77 @@
+{{
+    _ ARGS:
+        use-local-version-var (optional): Whether to define a local variable for the SDK version
+            instead of referencing the environment variable.
+        dotnet-is-internal (optional): Whether the Dockerfile is targeting an internal build of the .NET product.
+        dotnet-url-suffix (optional): Suffix string to append the end of .NET URLs. ^
+
+    set dotnetVersion to join(slice(split(PRODUCT_VERSION, "."), 0, 2), ".") ^
+    set isServerCore to find(OS_VERSION, "windowsservercore") >= 0 ^
+    set sdkExtractGroups to [
+        [
+            "dir": "dotnet",
+            "paths": filter([
+                "LICENSE.txt",
+                "ThirdPartyNotices.txt",
+                "packs",
+                "sdk",
+                "sdk-manifests",
+                "templates",
+                "shared"
+            ], len)
+        ],
+        [
+            "dir": "dotnet\shared",
+            "paths": [
+                "Microsoft.WindowsDesktop.App"
+            ]
+        ]
+    ] ^
+    set isSingleStage to (isServerCore && !ARGS["dotnet-is-internal"]) ^
+    set getFormattedPath(path) to:{{
+        return cat("'", path, "'")
+    }} ^
+    set mingitDir to when(isSingleStage, "$Env:ProgramFiles\MinGit", "MinGit")
+}}{{ if dotnetVersion != "6.0":# Download MinGit
+RUN powershell -Command " `
+        $ErrorActionPreference = 'Stop'; `
+        $ProgressPreference = 'SilentlyContinue'; `
+        `
+        {{InsertTemplate("../Dockerfile.windows.download-file",
+            [
+                "out-file": "mingit.zip",
+                "url": VARIABLES[cat("mingit|", ARCH_SHORT, "|url")],
+                "sha": VARIABLES[cat("mingit|", ARCH_SHORT, "|sha")],
+                "sha-var-name": "mingit_sha256",
+                "hash-algorithm": "sha256"
+            ], "        ")}}; `
+        mkdir {{ mingitDir }}; `
+        {{InsertTemplate("../Dockerfile.windows.extract-zip",
+            [
+                "file": "mingit.zip",
+                "dest-dir": mingitDir
+            ], "        ")}}"
+
+}}RUN powershell -Command " `
+        $ErrorActionPreference = 'Stop'; `
+        $ProgressPreference = 'SilentlyContinue'; `
+        `
+        # Retrieve .NET SDK
+        {{InsertTemplate("Dockerfile.windows.install-sdk",
+            [
+                "use-local-version-var": ARGS["use-local-version-var"],
+                "sdk-extract-groups": when(isSingleStage, sdkExtractGroups, []),
+                "is-internal": ARGS["dotnet-is-internal"],
+                "url-suffix": ARGS["dotnet-url-suffix"]
+            ], "        ")}} `
+        `
+        {{InsertTemplate("Dockerfile.windows.install-powershell",
+            [
+                "dotnet-is-internal": ARGS["dotnet-is-internal"]
+            ],
+            "        ")}}{{if !isSingleStage: `
+        `
+        # Delete everything in the dotnet folder that's not needed in the SDK layer but will instead be derived from base layers{{
+for i, group in sdkExtractGroups:
+        Get-ChildItem -Exclude {{join(map(group.paths, getFormattedPath), ",")}} -Path {{group.dir}} `
+            | Remove-Item -Force -Recurse{{if i < len(group.paths) - 1:; `}}}}}}"

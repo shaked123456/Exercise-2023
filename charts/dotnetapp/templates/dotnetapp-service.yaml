@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: {{ .Values.dotnetapp.app }}-app
+  name: {{ .Values.dotnetapp.app }}-app
+  namespace: {{ .Values.dotnetapp.namespace }}
+spec:
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 80
+  selector:
+    run: {{ .Values.dotnetapp.app }}-app
+  type: LoadBalancer

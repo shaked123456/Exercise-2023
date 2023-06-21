@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.jenkins.name }}
+  namespace: {{ .Values.jenkins.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.jenkins.labels }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.jenkins.labels }}
+    spec:
+      containers:
+      - image: {{ .Values.jenkins.containers.image }}
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /login
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: {{ .Values.jenkins.labels }}
+        ports:
+        - containerPort: 8080
+          name: httpport
+          protocol: TCP
+        - containerPort: 50000
+          name: jnlpport
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /login
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 500Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: {{ .Values.jenkins.volumeMounts.mountPath }}
+          name: {{ .Values.jenkins.volumes.name }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+      serviceAccount: {{ .Values.jenkins.serviceAccount }}
+      serviceAccountName: {{ .Values.jenkins.serviceAccount }}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: {{ .Values.jenkins.volumes.name }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.jenkins.pvc.name }}

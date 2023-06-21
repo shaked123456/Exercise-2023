@@ -1,0 +1,7 @@
+dotnetapp: 
+  name: dotnetapp
+  namespace: dotnetapp
+  labels: dotnetapp
+  app: dotnet
+  containers:
+    image: dotnetapp:v1

@@ -1,0 +1,29 @@
+trigger: none
+pr:
+  branches:
+    include:
+    - nightly
+    - feature/*
+  paths:
+    include:
+    - manifest.json
+    - manifest.versions.json
+    - eng/*
+    - src/*
+    - tests/*
+
+resources:
+  repositories:
+  - repository: PublicVersionsRepo
+    type: github
+    endpoint: public
+    name: dotnet/versions
+
+variables:
+- template: variables/core.yml
+
+stages:
+- template: stages/build-test-publish-repo.yml
+  parameters:
+    internalProjectName: ${{ variables.internalProjectName }}
+    publicProjectName: ${{ variables.publicProjectName }}
